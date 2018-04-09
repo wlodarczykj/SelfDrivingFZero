@@ -49,18 +49,18 @@ while True:
     img = sct.grab(bbox)
     np_img = np.array(img)
     gray = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 120)
+    cv2.imshow('window', gray)
 
     #Janky need a better way to do this.
     if(curr_output):
-        training_data.append([gray, curr_output])
+        training_data.append([edges, curr_output])
 
     if(len(training_data) == 1 and not saved):
         np.save(file_name, training_data)
         saved = True
 
     curr_output = None
-    edges = cv2.Canny(gray, 50, 120)
-    cv2.imshow('window', edges)
 
     if cv2.waitKey(25) & 0xFF == ord('q'):
         cv2.destroyAllWindows()
@@ -69,5 +69,6 @@ while True:
         
     after = time.time()
 
-    # print("inner loop took : " + str(round((after - before),4) * 1000) + " ms")
+    print("inner loop took : " + str(round((after - before),4) * 1000) + " ms")
+
 lis.join()
