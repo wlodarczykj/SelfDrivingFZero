@@ -1,3 +1,6 @@
+# Made by Jakub Wlodarczyk
+# Note for future... Clean up majorly needed. Organize into classes.
+
 import numpy as np
 import cv2
 import time
@@ -6,42 +9,78 @@ from mss import mss
 from pynput import keyboard
 
 #bbox = (0, 0, 1520, 900)
-bbox = (0, 175, 501, 380)
+bbox = (0, 175, 501, 350)
 
 sct = mss()
 
-forward = [1,0,0,0]
-back = [0,1,0,0]
-left = [0,0,1,0]
-right = [0,0,0,1]
-
-output_dict = {
-    keyboard.Key.left : left,
-    keyboard.Key.right : right,
-    keyboard.Key.up : forward,
-    keyboard.Key.down : back
+key_dict = {
+    keyboard.Key.left  : False,
+    keyboard.Key.right : False,
+    keyboard.Key.up    : False,
+    keyboard.Key.down  : False
 }
+
 curr_output = None
-
-def training_output(key):
-    if(key in output_dict):
-        return output_dict[key]
-    else:
-        return [0,0,0,0]
-
-def on_press(key):
-    try: k = key.char 
-    except: k = key.name 
-    global curr_output
-    curr_output = training_output(key)
-    # print('Key pressed: ' + k)
-
-lis = keyboard.Listener(on_press=on_press)
-lis.start()
-
 training_data = []
-file_name = "D:/Projects/SelfDrivingFZero/training.data"
+file_name = "D:/Projects/SelfDrivingFZero/trainingData"
 saved = False
+paused = True
+
+forward = False
+back = False
+left = False
+right = False
+
+def build_output(key_dict):
+    forward       = [1,0,0,0,0,0,0]
+    back          = [0,1,0,0,0,0,0]
+    left          = [0,0,1,0,0,0,0]
+    right         = [0,0,0,1,0,0,0]
+    forward_left  = [0,0,0,0,1,0,0]
+    forward_right = [0,0,0,0,0,1,0]
+    noop          = [0,0,0,0,0,0,1]
+
+    key_up = keyboard.Key.up
+    key_down = keyboard.Key.down
+    key_left = keyboard.Key.left
+    key_right = keyboard.Key.right
+
+    if key_dict[key_up]:
+        return forward
+    if key_dict[key_left] and key_dict[key_up]:
+        return forward_left
+    if key_dict[key_right] and key_dict[key_up]:
+        return forward_right
+    if key_dict[key_right]:
+        return right
+    if key_dict[key_left]:
+        return left
+    if key_dict[key_down]:
+        return back
+
+    return noop
+        
+def on_press(key):
+    global curr_output
+    global paused
+    global key_dict
+
+    key_dict[key] = True
+    curr_output = build_output(key_dict)
+
+    if type(key) is not keyboard.Key and key.char == 'w':
+        paused = not paused
+        print("Paused" if paused else "Unpaused")
+
+def on_release(key):
+    global curr_output
+    global key_dict
+    key_dict[key] = False
+
+    curr_output = build_output(key_dict)
+
+lis = keyboard.Listener(on_press=on_press, on_release=on_release)
+lis.start()
 
 while True:
     before = time.time()
@@ -49,26 +88,31 @@ while True:
     img = sct.grab(bbox)
     np_img = np.array(img)
     gray = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 120)
-    cv2.imshow('window', gray)
+    edges = cv2.Canny(gray, 30, 120)
+    cv2.imshow('window', edges)
 
     #Janky need a better way to do this.
-    if(curr_output):
+    if(curr_output and not paused):
         training_data.append([edges, curr_output])
+        print("Saved " + str(len(training_data)) + " sets of test data.")
 
-    if(len(training_data) == 1 and not saved):
+    if(len(training_data) == 2000 and not saved):
+        print("Saving data to " + file_name)
         np.save(file_name, training_data)
         saved = True
 
-    curr_output = None
+    # if(len(training_data) % 100 == 0 and len(training_data) > 0):
+    #     print("Saved " + str(len(training_data)) + " sets of test data.")
 
-    if cv2.waitKey(25) & 0xFF == ord('q'):
+    key = cv2.waitKey(25) & 0xFF
+
+    if key == ord('q'):
         cv2.destroyAllWindows()
         lis.stop()
         break
         
     after = time.time()
 
-    print("inner loop took : " + str(round((after - before),4) * 1000) + " ms")
+    # print("inner loop took : " + str(round((after - before),4) * 1000) + " ms")
 
 lis.join()
