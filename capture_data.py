@@ -26,11 +26,6 @@ file_name = "D:/Projects/SelfDrivingFZero/trainingData"
 saved = False
 paused = True
 
-forward = False
-back = False
-left = False
-right = False
-
 def build_output(key_dict):
     forward       = [1,0,0,0,0,0,0]
     back          = [0,1,0,0,0,0,0]
