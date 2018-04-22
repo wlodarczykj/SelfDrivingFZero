@@ -9,7 +9,7 @@ from mss import mss
 from pynput import keyboard
 
 #bbox = (0, 0, 1520, 900)
-bbox = (0, 175, 501, 350)
+bbox = (0, 175, 501, 400)
 
 sct = mss()
 
@@ -83,21 +83,20 @@ while True:
     img = sct.grab(bbox)
     np_img = np.array(img)
     gray = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 30, 120)
-    cv2.imshow('window', edges)
+    # edges = cv2.Canny(gray, 30, 120)
+    cv2.imshow('window', gray)
 
     #Janky need a better way to do this.
     if(curr_output and not paused):
-        training_data.append([edges, curr_output])
+        training_data.append([gray, curr_output])
+
+    if(len(training_data) % 500 == 0):
         print("Saved " + str(len(training_data)) + " sets of test data.")
 
-    if(len(training_data) == 2000 and not saved):
+    if(len(training_data) == 10000 and not saved):
         print("Saving data to " + file_name)
         np.save(file_name, training_data)
         saved = True
-
-    # if(len(training_data) % 100 == 0 and len(training_data) > 0):
-    #     print("Saved " + str(len(training_data)) + " sets of test data.")
 
     key = cv2.waitKey(25) & 0xFF
 
@@ -108,6 +107,5 @@ while True:
         
     after = time.time()
 
-    # print("inner loop took : " + str(round((after - before),4) * 1000) + " ms")
 
 lis.join()
