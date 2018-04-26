@@ -9,7 +9,7 @@ from mss import mss
 from pynput import keyboard
 
 #bbox = (0, 0, 1520, 900)
-bbox = (0, 175, 500, 475)
+bbox = (0, 175, 500, 375)
 
 sct = mss()
 
@@ -85,14 +85,13 @@ while True:
     edges = cv2.Canny(gray, 30, 100)
     cv2.imshow('window', edges)
 
-    #Janky need a better way to do this.
     if(curr_output and not paused):
         training_data.append([edges, curr_output])
 
-    if(len(training_data) % 500 == 0 and len(training_data) != 0):
+    if(len(training_data) % 100 == 0 and len(training_data) != 0):
         print("Saved {} sets of test data.".format(len(training_data)))
 
-    if(len(training_data) == 20000):
+    if(len(training_data) == 1000):
         file_name = file_name.format(curr_file_num)
         print("Saving data to {}".format(file_name))
         np.save(file_name, training_data)
