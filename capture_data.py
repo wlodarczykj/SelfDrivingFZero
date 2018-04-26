@@ -9,7 +9,7 @@ from mss import mss
 from pynput import keyboard
 
 #bbox = (0, 0, 1520, 900)
-bbox = (0, 175, 501, 400)
+bbox = (0, 175, 500, 475)
 
 sct = mss()
 
@@ -22,8 +22,8 @@ key_dict = {
 
 curr_output = None
 training_data = []
-file_name = "D:/Projects/SelfDrivingFZero/trainingData"
-saved = False
+file_name = "D:/Projects/SelfDrivingFZero/trainingData-{}"
+curr_file_num = 0
 paused = True
 
 def build_output(key_dict):
@@ -40,12 +40,12 @@ def build_output(key_dict):
     key_left = keyboard.Key.left
     key_right = keyboard.Key.right
 
-    if key_dict[key_up]:
-        return forward
     if key_dict[key_left] and key_dict[key_up]:
         return forward_left
     if key_dict[key_right] and key_dict[key_up]:
         return forward_right
+    if key_dict[key_up]:
+        return forward
     if key_dict[key_right]:
         return right
     if key_dict[key_left]:
@@ -78,24 +78,27 @@ lis = keyboard.Listener(on_press=on_press, on_release=on_release)
 lis.start()
 
 while True:
-    before = time.time()
-
     img = sct.grab(bbox)
     np_img = np.array(img)
-    gray = cv2.cvtColor(np_img, cv2.COLOR_BGR2GRAY)
-    # edges = cv2.Canny(gray, 30, 120)
-    cv2.imshow('window', gray)
+    gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
+    # screen = cv2.resize(screen, ())
+    edges = cv2.Canny(gray, 30, 100)
+    cv2.imshow('window', edges)
 
     #Janky need a better way to do this.
     if(curr_output and not paused):
-        training_data.append([gray, curr_output])
+        training_data.append([edges, curr_output])
 
-    if(len(training_data) % 500 == 0):
-        print("Saved " + str(len(training_data)) + " sets of test data.")
+    if(len(training_data) % 500 == 0 and len(training_data) != 0):
+        print("Saved {} sets of test data.".format(len(training_data)))
 
-    if(len(training_data) == 10000 and not saved):
-        print("Saving data to " + file_name)
+    if(len(training_data) == 20000):
+        file_name = file_name.format(curr_file_num)
+        print("Saving data to {}".format(file_name))
         np.save(file_name, training_data)
+        print("Save complete")
+        training_data = []
+        curr_file_num += 1
         saved = True
 
     key = cv2.waitKey(25) & 0xFF

@@ -9,13 +9,13 @@ from PIL import ImageGrab, Image
 from mss import mss
 from statistics import mode,mean
 
-bbox = (0, 175, 501, 350)
+bbox = (0, 175, 500, 475)
 sct = mss()
 
 keyboard = Controller()
 
-WIDTH = 175
-HEIGHT = 501
+WIDTH = 500
+HEIGHT = 300
 LR = 1e-3
 EPOCHS = 10
 
@@ -74,7 +74,7 @@ def key_no_op():
     keyboard.release(Key.left)
     
 model = alexnet(WIDTH, HEIGHT, LR, output=7)
-MODEL_NAME = 'model_v2'
+MODEL_NAME = 'alexnet_v1'
 model.load(MODEL_NAME)
 
 print('We have loaded a previous model!!!!')
@@ -94,7 +94,8 @@ def main():
         
         if not paused:
             prediction = model.predict([edges.reshape(WIDTH,HEIGHT,1)])[0]
-            prediction = np.array(prediction) * np.array([0.04, 5.2, 2.2, 7.2, 7.2, 16.3, 6.0])
+            prediction = np.array(prediction) * np.array([.5, 6, 6, 6, 2.3, 2.3, 6])
+            print(str(prediction))
             mode_choice = np.argmax(prediction)
 
             if mode_choice == 0:

@@ -8,12 +8,12 @@ from random import shuffle
 
 FILE_I_END = 1860
 
-WIDTH = 175
-HEIGHT = 501
+WIDTH = 500
+HEIGHT = 300
 LR = 1e-3
 EPOCHS = 30
 
-MODEL_NAME = 'model_v2'
+MODEL_NAME = 'alexnet_v1'
 PREV_MODEL = ''
 
 forward       = [1,0,0,0,0,0,0]
@@ -31,14 +31,13 @@ for e in range(EPOCHS):
     data_order = [i for i in range(1,FILE_I_END+1)]
     shuffle(data_order)
     try:
-        file_name = "D:\Projects\SelfDrivingFZero\cleanTrainingData.npy"
+        file_name = "D:\\Projects\\SelfDrivingFZero\\trainingData-0.npy"
         # full file info
         train_data = np.load(file_name)
         shuffle(train_data)
-        train = train_data[:-50]
-        test = train_data[-50:]
+        train = train_data[:-100]
+        test = train_data[-100:]
 
-        print(str(train[0]))
         X = np.array([i[0] for i in train]).reshape(-1,WIDTH,HEIGHT,1)
         Y = [i[1] for i in train]
 
